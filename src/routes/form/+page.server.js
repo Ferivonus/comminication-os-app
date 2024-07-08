@@ -1,4 +1,4 @@
-import { posts } from './data.js';
+import { posts } from './form_data.js';
 
 export function load() {
 	return {

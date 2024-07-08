@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { posts } from '../data.js';
+import { posts } from '../form_data.js';
 
 export function load({ params }) {
 	const post = posts.find((post) => post.slug === params.slug);

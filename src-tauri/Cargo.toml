@@ -1,19 +1,23 @@
 [package]
 name = "comminication-os-app"
-version = "0.0.0"
+version = "0.1.0"
 description = "A Tauri App"
-authors = ["you"]
+authors = ["Ferivonus"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1", features = [] }
+tauri-build = { version = "1.5.3", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = ["shell-open"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+tauri = { version = "1.7.1", features = ["shell-open"] }
+serde = { version = "1.0.204", features = ["derive"] }
+serde_json = "1.0.120"
+actix-web = "4.8.0"
+log = "0.4.22"
+actix-cors = "0.6.4"
+dotenv = "0.15.0"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
