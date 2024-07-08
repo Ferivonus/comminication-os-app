@@ -1,4 +1,5 @@
 <script>
+  export let data;
   import { invoke } from "@tauri-apps/api/tauri";
 
   let name = "";
@@ -18,28 +19,22 @@
 </nav>
 
 <div class="container">
-  <h1>Welcome to my comminication app!</h1>
+  <h1>Welcome to form {data.post.title}!</h1>
 
-  <div class="row">
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo vite" alt="Vite Logo" />
-    </a>
-    <a href="https://tauri.app" target="_blank">
-      <img src="/tauri.svg" class="logo tauri" alt="Tauri Logo" />
-    </a>
-    <a href="https://kit.svelte.dev" target="_blank">
-      <img src="/svelte.svg" class="logo svelte-kit" alt="SvelteKit Logo" />
-    </a>
-  </div>
-
-  <p>Click on the Tauri, Vite, and SvelteKit logos to learn more.</p>
+  <p>Here you can add some messages :3.</p>
 
   <form class="row" on:submit|preventDefault={greet}>
-    <input id="greet-input" placeholder="Enter a name..." bind:value={name} />
+    <input
+      id="greet-input"
+      placeholder="What would you wanna add that blog?"
+      bind:value={name}
+    />
     <button type="submit">Greet</button>
   </form>
 
   <p>{greetMsg}</p>
+
+  <div>{@html data.post.content}</div>
 </div>
 
 <style>
