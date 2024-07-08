@@ -1,7 +1,12 @@
-# Tauri + SvelteKit
+# Comminication OS application
 
-This template should help get you started developing with Tauri and SvelteKit in Vite.
+## This application is for:
 
-## Recommended IDE Setup
+-comminicating
+-talking with others
+-using forms
+-and more useful arch tips for newbies :^3
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+### Could you please don't use that?
+
+I won't use that code because I will use that on my OS as a future, but you can see what I did :3
