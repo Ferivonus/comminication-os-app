@@ -15,6 +15,7 @@
   <a href="/about">about</a>
   <a href="/form">form</a>
   <a href="/messages">messages</a>
+  <a href="/wailing-wall">wailing wall</a>
 </nav>
 
 <div class="container">

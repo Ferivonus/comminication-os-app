@@ -1,14 +1,22 @@
 <script>
-  export let data;
+  import { onMount } from "svelte";
+
   import { invoke } from "@tauri-apps/api/tauri";
 
-  let name = "";
-  let greetMsg = "";
+  let wailing_wall_message = "";
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    greetMsg = await invoke("greet", { name });
+  async function wailing_wall_message_getter() {
+    try {
+      wailing_wall_message = await invoke("fetch_wailing_example_data");
+    } catch (error) {
+      console.error("Error fetching wailing wall message:", error);
+      wailing_wall_message = "Error fetching message";
+    }
   }
+
+  onMount(() => {
+    wailing_wall_message_getter();
+  });
 </script>
 
 <nav>
@@ -20,22 +28,13 @@
 </nav>
 
 <div class="container">
-  <h1>Welcome to form {data.post.title}!</h1>
+  <h1>Welcome to Wailing wall page!</h1>
 
-  <p>Here you can add some messages :3.</p>
+  <p>this is the Wailing page.</p>
 
-  <form class="row" on:submit|preventDefault={greet}>
-    <input
-      id="greet-input"
-      placeholder="What would you wanna add that blog?"
-      bind:value={name}
-    />
-    <button type="submit">Greet</button>
-  </form>
+  <p>{wailing_wall_message}</p>
 
-  <p>{greetMsg}</p>
-
-  <div>{@html data.post.content}</div>
+  <div class="row"></div>
 </div>
 
 <style>

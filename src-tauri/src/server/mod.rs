@@ -30,9 +30,9 @@ pub async fn init(app: AppHandle) -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin("http://127.0.0.1")
-            .allowed_origin("http://192.168.1.1")
-            .allowed_methods(vec!["GET", "POST"])
+            .allowed_origin("http://127.0.0.1:1420")
+            .allowed_origin("http://127.0.0.1:4875")
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
             .allowed_headers(vec![
                 actix_web::http::header::AUTHORIZATION,
                 actix_web::http::header::ACCEPT,
