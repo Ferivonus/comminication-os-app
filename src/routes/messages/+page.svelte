@@ -1,159 +1,113 @@
 <script>
+  import { invoke } from "@tauri-apps/api/tauri";
+  import { listen } from "@tauri-apps/api/event";
+  import { onMount } from "svelte";
+
+  let name = "";
+  let greetMsg = "";
+  let message = "";
+  // @ts-ignore
+  /**
+   * @type {any[]}
+   */
+  let sentMessages = [];
+  /**
+   * @type {any[]}
+   */
+  let nodeMessages = [];
+  /**
+   * @type {any[]}
+   */
+  let nodeErrors = [];
+
+  async function greet() {
+    greetMsg = await invoke("greet", { name });
+  }
+
+  async function fetchWailingExampleData() {
+    try {
+      const data = await invoke("fetch_wailing_example_data");
+      console.log("Fetched data:", data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  }
+
+  async function startMessageNode() {
+    try {
+      await invoke("start_message_node");
+    } catch (error) {
+      console.error("Error starting message node:", error);
+    }
+  }
+
+  async function sendMessage() {
+    try {
+      await invoke("send_message", { message });
+      sentMessages = [...sentMessages, message];
+      message = "";
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  }
+
+  function listenToNodeEvents() {
+    listen("node-event", (event) => {
+      nodeMessages = [...nodeMessages, event.payload];
+    });
+  }
+
+  function listenToNodeErrors() {
+    listen("node-error", (event) => {
+      nodeErrors = [...nodeErrors, event.payload];
+    });
+  }
+
+  onMount(() => {
+    listenToNodeEvents();
+    listenToNodeErrors();
+    startMessageNode();
+  });
 </script>
 
-<nav>
-  <a href="/">home</a>
-  <a href="/about">about</a>
-  <a href="/form">form</a>
-  <a href="/messages">messages</a>
-  <a href="/wailing-wall">wailing wall</a>
-</nav>
+<main>
+  <h1>Welcome to Tauri!</h1>
 
-<div class="container">
-  <h1>Welcome to message page!</h1>
+  <div>
+    <input bind:value={name} placeholder="Enter your name" />
+    <button on:click={greet}>Greet</button>
+    <p>{greetMsg}</p>
+  </div>
 
-  <p>this is the message page.</p>
+  <div>
+    <button on:click={fetchWailingExampleData}
+      >Fetch Wailing Example Data</button
+    >
+  </div>
 
-  <div class="row"></div>
-</div>
+  <div>
+    <h2>Node Messages</h2>
+    <ul>
+      {#each nodeMessages as message}
+        <li>{message}</li>
+      {/each}
+    </ul>
+    <h2>Node Errors</h2>
+    <ul>
+      {#each nodeErrors as error}
+        <li>{error}</li>
+      {/each}
+    </ul>
+  </div>
 
-<style>
-  .logo.vite:hover {
-    filter: drop-shadow(0 0 2em #747bff);
-  }
-
-  .logo.svelte-kit:hover {
-    filter: drop-shadow(0 0 2em #ff3e00);
-  }
-
-  :root {
-    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 400;
-    color: #0f0f0f;
-    background-color: #f6f6f6;
-    --nav-background-color: hsl(207, 63%, 15%);
-    --border-radius: 22px;
-
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-text-size-adjust: 100%;
-  }
-
-  .container {
-    margin: 0;
-    padding-top: 10vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: 0.75s;
-  }
-
-  .logo.tauri:hover {
-    filter: drop-shadow(0 0 2em #24c8db);
-  }
-
-  .row {
-    display: flex;
-    justify-content: center;
-  }
-
-  a {
-    font-weight: 500;
-    color: #646cff;
-    text-decoration: inherit;
-  }
-
-  a:hover {
-    color: #535bf2;
-  }
-
-  h1 {
-    text-align: center;
-  }
-
-  input,
-  button {
-    border-radius: 8px;
-    border: 1px solid transparent;
-    padding: 0.6em 1.2em;
-    font-size: 1em;
-    font-weight: 500;
-    font-family: inherit;
-    color: #0f0f0f;
-    background-color: #ffffff;
-    transition: border-color 0.25s;
-    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-  }
-
-  button {
-    cursor: pointer;
-  }
-
-  button:hover {
-    border-color: #396cd8;
-  }
-
-  button:active {
-    border-color: #396cd8;
-    background-color: #e8e8e8;
-  }
-
-  input,
-  button {
-    outline: none;
-  }
-
-  #greet-input {
-    margin-right: 5px;
-  }
-
-  nav {
-    position: relative;
-    display: flex;
-    gap: 1em;
-    padding: 1em;
-    background: var(--nav-background-color);
-    z-index: 2;
-    margin: 0 0 1em 0;
-    border-radius: var(--border-radius);
-  }
-
-  nav a {
-    text-decoration: none;
-  }
-
-  nav a[aria-current="true"] {
-    border-bottom: 2px solid;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      color: #f6f6f6;
-      background-color: #2f2f2f;
-    }
-
-    a:hover {
-      color: #24c8db;
-    }
-
-    input,
-    button {
-      color: #ffffff;
-      background-color: #0f0f0f98;
-    }
-    button:active {
-      background-color: #0f0f0f69;
-    }
-  }
-</style>
+  <div>
+    <input bind:value={message} placeholder="Enter your message" />
+    <button on:click={sendMessage}>Send Message</button>
+    <h2>Sent Messages</h2>
+    <ul>
+      {#each sentMessages as sentMessage}
+        <li>{sentMessage}</li>
+      {/each}
+    </ul>
+  </div>
+</main>

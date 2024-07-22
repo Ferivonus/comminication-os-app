@@ -39,14 +39,6 @@
 </div>
 
 <style>
-  .logo.vite:hover {
-    filter: drop-shadow(0 0 2em #747bff);
-  }
-
-  .logo.svelte-kit:hover {
-    filter: drop-shadow(0 0 2em #ff3e00);
-  }
-
   :root {
     font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
     font-size: 16px;
@@ -71,17 +63,6 @@
     flex-direction: column;
     justify-content: center;
     text-align: center;
-  }
-
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: 0.75s;
-  }
-
-  .logo.tauri:hover {
-    filter: drop-shadow(0 0 2em #24c8db);
   }
 
   .row {
@@ -152,10 +133,6 @@
 
   nav a {
     text-decoration: none;
-  }
-
-  nav a[aria-current="true"] {
-    border-bottom: 2px solid;
   }
 
   @media (prefers-color-scheme: dark) {

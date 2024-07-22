@@ -1,6 +1,10 @@
 {
   "svelte.enable-ts-plugin": true,
   "cSpell.words": [
-    "tauri"
+    "behaviour",
+    "Hasher",
+    "quic",
+    "tauri",
+    "yamux"
   ]
 }

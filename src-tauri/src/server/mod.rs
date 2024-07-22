@@ -8,24 +8,22 @@ use handlers::form_handlers;
 use handlers::message_handlers;
 use handlers::wailing_wall_handlers;
 
-use handlers::{example::handle, form_handlers::form_example};
 use tauri::AppHandle;
 
 use actix_cors::Cors;
-use actix_web::middleware::Logger;
+// use actix_web::middleware::Logger;
 use dotenv::dotenv;
-use tauri::http::header;
 
 struct TauriAppState {
-    app: Mutex<AppHandle>,
+    _app: Mutex<AppHandle>,
 }
 
 #[actix_web::main]
-pub async fn init(app: AppHandle) -> std::io::Result<()> {
+pub async fn init(_app: AppHandle) -> std::io::Result<()> {
     dotenv().ok(); // .env dosyasını yükler
 
     let tauri_app = web::Data::new(TauriAppState {
-        app: Mutex::new(app),
+        _app: Mutex::new(_app),
     });
 
     HttpServer::new(move || {
@@ -44,7 +42,6 @@ pub async fn init(app: AppHandle) -> std::io::Result<()> {
             .app_data(tauri_app.clone())
             .wrap(cors)
             .wrap(middleware::Logger::default())
-            .service(handle)
             .configure(message_handlers::message_example::message_handler_config)
             .configure(form_handlers::form_example::form_handler_config)
             .configure(wailing_wall_handlers::wailing_example::message_handler_config)

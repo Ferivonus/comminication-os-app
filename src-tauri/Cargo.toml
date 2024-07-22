@@ -1,7 +1,7 @@
 [package]
 name = "comminication-os-app"
 version = "0.1.0"
-description = "A Tauri App"
+description = "A Tauri App for Comminication OS"
 authors = ["Ferivonus"]
 edition = "2021"
 
@@ -16,9 +16,19 @@ serde = { version = "1.0.204", features = ["derive"] }
 serde_json = "1.0.120"
 actix-web = "4.8.0"
 log = "0.4.22"
-actix-cors = "0.6.5"
+actix-cors = "0.7.0"
 dotenv = "0.15.0"
 reqwest = { version = "0.12.5", features = ["json"] }
+tokio = { version = "1.38.1", features = ["full"] }
+once_cell = "1.19.0"
+
+libp2p = { version = "0.53.2", features = ["full"] }
+async-trait = "0.1.81"
+futures = { version = "0.3.30" }
+tracing = { version = "0.1.40" }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+
+async-channel = "2.3.1"
 
 
 [features]
