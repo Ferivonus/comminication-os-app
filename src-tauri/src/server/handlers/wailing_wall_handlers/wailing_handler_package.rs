@@ -1,5 +1,13 @@
-use actix_web::{get, web, HttpResponse};
+use crate::server::AppState;
 
+use actix_web::{get, web, HttpResponse, Responder};
+use sqlx::FromRow;
+
+#[derive(FromRow)]
+struct Message {
+    id: i32,
+    content: String,
+}
 #[get("/example")]
 pub async fn handle() -> HttpResponse {
     HttpResponse::Ok().body("wailing Example handler")

@@ -1,1 +1,1 @@
-pub mod wailing_example;
+pub mod wailing_handler_package;

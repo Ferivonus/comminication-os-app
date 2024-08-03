@@ -20,6 +20,7 @@
     "windows": [
       {
         "title": "comminication-os-app",
+        "label": "main",
         "width": 800,
         "height": 600
       }

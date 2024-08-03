@@ -1,6 +1,21 @@
 <script>
+  import { invoke } from "@tauri-apps/api";
+
   export let data;
+
+  // Function to trigger a notification
+  async function sendNotification() {
+    try {
+      await invoke("notify_frontend", { message: "Hello from frontend!" });
+      console.log("Notification sent successfully!");
+    } catch (e) {
+      console.error("Failed to send notification:", e);
+      alert("Failed to send notification. Check console for details.");
+    }
+  }
 </script>
+
+<button on:click={sendNotification}>Send Notification</button>
 
 <nav>
   <a href="/">home</a>
@@ -25,22 +40,17 @@
 
 <style>
   :root {
-    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-    font-size: 16px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 18px;
     line-height: 24px;
-    font-weight: 400;
-    color: #0f0f0f;
-    background-color: #f6f6f6;
-    --nav-background-color: hsl(207, 63%, 15%);
-    --border-radius: 22px;
-
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-text-size-adjust: 100%;
+    color: #00ff00; /* Retro green text */
+    background-color: #000000; /* Retro black background */
+    --nav-background-color: #003300;
+    --border-radius: 8px;
+    --glitch-color: #ff00ff;
+    --glitch-shadow: 0 0 5px rgba(255, 0, 255, 0.7);
+    overflow-x: hidden;
   }
-
   .container {
     margin: 0;
     padding-top: 10vh;
@@ -69,7 +79,6 @@
     text-align: center;
   }
 
-  input,
   button {
     border-radius: 8px;
     border: 1px solid transparent;
@@ -98,13 +107,8 @@
   }
 
   @media (prefers-color-scheme: dark) {
-    :root {
-      color: #f6f6f6;
-      background-color: #2f2f2f;
-    }
-
-    a:hover {
-      color: #24c8db;
+    nav a:hover {
+      color: #ff00ff;
     }
   }
 </style>

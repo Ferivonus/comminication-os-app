@@ -1,1 +1,1 @@
-pub mod message_example;
+pub mod message_handler_package;
