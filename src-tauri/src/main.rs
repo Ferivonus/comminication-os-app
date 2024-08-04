@@ -1,11 +1,60 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod server;
-use reqwest::Client;
-use std::thread;
+use reqwest::{Client, Error as ReqwestError};
+use serde::{Deserialize, Serialize};
+use std::fmt;
 use tauri::Manager;
 
+// Define the structs for your API payloads
+#[derive(Deserialize, Serialize)]
+struct NewMessage {
+    sender: String,
+    receiver: String,
+    content: String,
+    close_one_point: Option<String>,
+    connected_person: Option<String>,
+}
+
+// Define error types for more specific error handling
+#[derive(Debug)]
+enum ApiError {
+    ReqwestError(ReqwestError),
+    HttpError(reqwest::StatusCode),
+    ParseError(String),
+}
+
+impl fmt::Display for ApiError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ApiError::ReqwestError(err) => write!(f, "Request error: {}", err),
+            ApiError::HttpError(status) => write!(f, "HTTP error with status code: {}", status),
+            ApiError::ParseError(err) => write!(f, "Parse error: {}", err),
+        }
+    }
+}
+
+impl std::error::Error for ApiError {}
+
+impl From<ReqwestError> for ApiError {
+    fn from(error: ReqwestError) -> Self {
+        ApiError::ReqwestError(error)
+    }
+}
+
+// Helper function to handle HTTP responses
+async fn handle_response(response: reqwest::Response) -> Result<String, ApiError> {
+    if response.status().is_success() {
+        response
+            .text()
+            .await
+            .map_err(|e| ApiError::ParseError(e.to_string()))
+    } else {
+        Err(ApiError::HttpError(response.status()))
+    }
+}
+
+// Command to notify the frontend
 #[tauri::command]
 async fn notify_frontend(app_handle: tauri::AppHandle, message: String) -> Result<(), String> {
     app_handle
@@ -13,13 +62,13 @@ async fn notify_frontend(app_handle: tauri::AppHandle, message: String) -> Resul
         .map_err(|e| e.to_string())
 }
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+// Command to greet
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+// Command to fetch example data
 #[tauri::command]
 async fn fetch_wailing_example_data() -> Result<String, String> {
     let client = Client::new();
@@ -29,11 +78,92 @@ async fn fetch_wailing_example_data() -> Result<String, String> {
         .await
         .map_err(|e| e.to_string())?;
 
-    if response.status().is_success() {
-        let body = response.text().await.map_err(|e| e.to_string())?;
-        Ok(body)
+    handle_response(response).await.map_err(|e| e.to_string())
+}
+
+// Command to send a message to 'my-client'
+#[tauri::command]
+async fn send_message_my_client(new_message: NewMessage) -> Result<(), String> {
+    validate_message(&new_message)?;
+
+    let client = Client::new();
+    let response = client
+        .post("http://127.0.0.1:4875/my-client/send")
+        .json(&new_message)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    handle_response(response)
+        .await
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
+// Command to send a message to 'other-client'
+#[tauri::command]
+async fn send_message_other_client(new_message: NewMessage) -> Result<(), String> {
+    validate_message(&new_message)?;
+
+    let client = Client::new();
+    let response = client
+        .post("http://127.0.0.1:4875/other-client/send")
+        .json(&new_message)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    handle_response(response)
+        .await
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
+// Command to get messages from 'my-client' by connected_person
+#[tauri::command]
+async fn get_messages_my_client(connected_person: String) -> Result<String, String> {
+    validate_connected_person(&connected_person)?;
+
+    let client = Client::new();
+    let url = format!(
+        "http://127.0.0.1:4875/my-client/messages/{}",
+        connected_person
+    );
+    let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
+
+    handle_response(response).await.map_err(|e| e.to_string())
+}
+
+// Command to get messages from 'other-client' by connected_person
+#[tauri::command]
+async fn get_messages_other_client(connected_person: String) -> Result<String, String> {
+    validate_connected_person(&connected_person)?;
+
+    let client = Client::new();
+    let url = format!(
+        "http://127.0.0.1:4875/other-client/messages/{}",
+        connected_person
+    );
+    let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
+
+    handle_response(response).await.map_err(|e| e.to_string())
+}
+
+// Helper function to validate NewMessage
+fn validate_message(message: &NewMessage) -> Result<(), String> {
+    if message.sender.is_empty() || message.receiver.is_empty() || message.content.is_empty() {
+        Err("Sender, receiver, and content cannot be empty".into())
     } else {
-        Err(format!("HTTP error: {}", response.status()))
+        Ok(())
+    }
+}
+
+// Helper function to validate connected_person
+fn validate_connected_person(connected_person: &str) -> Result<(), String> {
+    if connected_person.is_empty() {
+        Err("Connected person cannot be empty".into())
+    } else {
+        Ok(())
     }
 }
 
@@ -44,8 +174,10 @@ async fn main() {
             let app_handle = app.handle();
 
             // Initialize server in a separate thread
-            thread::spawn(move || {
-                server::init(app_handle.clone()).unwrap();
+            std::thread::spawn(move || {
+                if let Err(e) = server::init(app_handle.clone()) {
+                    eprintln!("Error initializing server: {}", e);
+                }
             });
 
             Ok(())
@@ -54,6 +186,10 @@ async fn main() {
             fetch_wailing_example_data,
             greet,
             notify_frontend,
+            send_message_my_client,
+            send_message_other_client,
+            get_messages_my_client,
+            get_messages_other_client
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

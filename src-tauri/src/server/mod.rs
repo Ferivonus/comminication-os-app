@@ -1,36 +1,54 @@
-mod handlers;
-
-use std::sync::Arc;
-
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpServer};
 use dotenv::dotenv;
-use sqlx::mysql::MySqlPool;
-use tauri::AppHandle;
+use env_logger;
+use sqlx::{mysql::MySqlPoolOptions, MySqlPool};
+use std::sync::Arc;
+use tauri::AppHandle; // Ensure to import env_logger
 
-use handlers::form_handlers;
-use handlers::message_handlers;
-use handlers::wailing_wall_handlers;
-struct AppState {
+mod handlers;
+use handlers::{form_handlers, message_handlers, wailing_wall_handlers};
+
+#[allow(dead_code)]
+pub struct AppState {
     tauri_app: Arc<AppHandle>,
     db_pool: MySqlPool,
+}
+
+// Function to initialize logging
+fn init_logging() {
+    if std::env::var_os("RUST_LOG").is_none() {
+        std::env::set_var("RUST_LOG", "actix_web=info");
+    }
+    env_logger::init();
+}
+
+// Function to initialize the database pool
+async fn init_db_pool() -> MySqlPool {
+    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    MySqlPoolOptions::new()
+        .max_connections(10)
+        .connect(&db_url)
+        .await
+        .expect("Failed to connect to database")
 }
 
 #[actix_web::main]
 pub async fn init(tauri_app: AppHandle) -> std::io::Result<()> {
     dotenv().ok(); // Load .env file
+    init_logging(); // Initialize the logger
 
     // Set up database pool
-    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let db_pool = MySqlPool::connect(&db_url)
-        .await
-        .expect("Failed to connect to database");
+    let db_pool = init_db_pool().await;
+    println!("✅ Connection to the database is successful!");
 
+    // Create application state
     let app_state = web::Data::new(AppState {
         tauri_app: Arc::new(tauri_app),
         db_pool,
     });
 
+    // Configure and start the HTTP server
     HttpServer::new(move || {
         let cors = Cors::default()
             .allowed_origin("http://127.0.0.1:1420")
