@@ -65,9 +65,9 @@ pub async fn init(tauri_app: AppHandle) -> std::io::Result<()> {
             .app_data(app_state.clone())
             .wrap(cors)
             .wrap(middleware::Logger::default())
-            .configure(message_handlers::message_handler_package::message_handler_config)
-            .configure(form_handlers::form_handler_package::form_handler_config)
-            .configure(wailing_wall_handlers::wailing_handler_package::message_handler_config)
+            .configure(message_handlers::message_handler_config)
+            .configure(form_handlers::form_handler_config)
+            .configure(wailing_wall_handlers::message_handler_config)
     })
     .bind(("127.0.0.1", 4875))?
     .run()

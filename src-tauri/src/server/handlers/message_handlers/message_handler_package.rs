@@ -190,14 +190,3 @@ async fn create_messages_send_to_other_client_table(pool: &MySqlPool) -> Result<
 async fn create_messages_send_to_my_client_table(pool: &MySqlPool) -> Result<(), SqlxError> {
     create_table(pool, "messages_send_to_my_client").await
 }
-
-pub fn message_handler_config(conf: &mut web::ServiceConfig) {
-    let scope = web::scope("/message")
-        .service(create_messages_send_to_my_client_table_handler)
-        .service(create_messages_send_to_other_client_table_handler)
-        .service(send_message_my_client)
-        .service(send_message_other_client)
-        .service(get_messages_my_client)
-        .service(get_messages_other_client);
-    conf.service(scope);
-}
