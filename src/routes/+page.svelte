@@ -81,6 +81,7 @@
             <p class="link-description">
               Contribute and read messages on the virtual wailing wall.
             </p>
+            dd
           </a>
         </li>
       </ul>
@@ -110,31 +111,6 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-  }
-
-  nav {
-    display: flex;
-    justify-content: center;
-    gap: 1em;
-    padding: 1em;
-    background: var(--nav-background-color);
-    z-index: 2;
-    border-radius: var(--border-radius);
-  }
-
-  nav a {
-    text-decoration: none;
-    color: #00ff00;
-    font-weight: bold;
-    text-shadow: 0 0 2px var(--glitch-color);
-    transition:
-      color 0.3s,
-      text-shadow 0.3s;
-  }
-
-  nav a:hover {
-    color: #ff00ff;
-    text-shadow: 0 0 10px var(--glitch-color);
   }
 
   .container {
@@ -281,8 +257,5 @@
   }
 
   @media (prefers-color-scheme: dark) {
-    nav a:hover {
-      color: #ff00ff;
-    }
   }
 </style>

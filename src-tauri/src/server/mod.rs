@@ -53,6 +53,7 @@ pub async fn init(tauri_app: AppHandle) -> std::io::Result<()> {
         let cors = Cors::default()
             .allowed_origin("http://127.0.0.1:1420")
             .allowed_origin("http://127.0.0.1:4875")
+            .allowed_origin("http://127.0.0.1:4173")
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
             .allowed_headers(vec![
                 actix_web::http::header::AUTHORIZATION,

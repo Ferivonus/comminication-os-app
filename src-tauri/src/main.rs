@@ -6,7 +6,12 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use tauri::Manager;
 
-// Define the structs for your API payloads
+#[derive(Serialize, Deserialize)]
+struct FormPage {
+    slug: String,
+    title: String,
+}
+
 #[derive(Deserialize, Serialize)]
 struct NewMessage {
     sender: String,
@@ -42,6 +47,12 @@ impl From<ReqwestError> for ApiError {
     }
 }
 
+impl From<serde_json::Error> for ApiError {
+    fn from(error: serde_json::Error) -> Self {
+        ApiError::ParseError(error.to_string())
+    }
+}
+
 // Helper function to handle HTTP responses
 async fn handle_response(response: reqwest::Response) -> Result<String, ApiError> {
     if response.status().is_success() {
@@ -51,6 +62,24 @@ async fn handle_response(response: reqwest::Response) -> Result<String, ApiError
             .map_err(|e| ApiError::ParseError(e.to_string()))
     } else {
         Err(ApiError::HttpError(response.status()))
+    }
+}
+
+// Command to fetch form pages
+#[tauri::command]
+async fn fetch_form_pages() -> Result<Vec<FormPage>, String> {
+    let client = Client::new();
+    let response = client
+        .get("http://127.0.0.1:4875/form/all-form-pages")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if response.status().is_success() {
+        let form_pages: Vec<FormPage> = response.json().await.map_err(|e| e.to_string())?;
+        Ok(form_pages)
+    } else {
+        Err(format!("Failed to fetch form pages: {}", response.status()))
     }
 }
 
@@ -88,7 +117,7 @@ async fn send_message_my_client(new_message: NewMessage) -> Result<(), String> {
 
     let client = Client::new();
     let response = client
-        .post("http://127.0.0.1:4875/my-client/send")
+        .post("http://127.0.0.1:4875/message/send-message-my-client")
         .json(&new_message)
         .send()
         .await
@@ -107,7 +136,7 @@ async fn send_message_other_client(new_message: NewMessage) -> Result<(), String
 
     let client = Client::new();
     let response = client
-        .post("http://127.0.0.1:4875/other-client/send")
+        .post("http://127.0.0.1:4875/message/send-message-other-client")
         .json(&new_message)
         .send()
         .await
@@ -126,7 +155,7 @@ async fn get_messages_my_client(connected_person: String) -> Result<String, Stri
 
     let client = Client::new();
     let url = format!(
-        "http://127.0.0.1:4875/my-client/messages/{}",
+        "http://127.0.0.1:4875/message/get-messages-my-client/{}",
         connected_person
     );
     let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
@@ -141,7 +170,7 @@ async fn get_messages_other_client(connected_person: String) -> Result<String, S
 
     let client = Client::new();
     let url = format!(
-        "http://127.0.0.1:4875/other-client/messages/{}",
+        "http://127.0.0.1:4875/message/get-messages-other-client/{}",
         connected_person
     );
     let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
@@ -167,6 +196,50 @@ fn validate_connected_person(connected_person: &str) -> Result<(), String> {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+struct Person {
+    id: String,
+    nick: Option<String>,
+    age: Option<i32>,
+    location: Option<String>,
+    occupation: Option<String>,
+    extra_info: Option<String>,
+}
+
+#[tauri::command]
+async fn get_contacts_my_client() -> Result<Vec<Person>, String> {
+    let client = Client::new();
+    let url = "http://127.0.0.1:4875/message/connected-people";
+    let response = client.get(url).send().await.map_err(|e| e.to_string())?;
+
+    if response.status().is_success() {
+        let people: Vec<Person> = response.json().await.map_err(|e| e.to_string())?;
+        Ok(people)
+    } else {
+        Err(format!(
+            "Failed to fetch contacts from 'my-client': {}",
+            response.status()
+        ))
+    }
+}
+
+#[tauri::command]
+async fn get_contacts_other_client() -> Result<Vec<Person>, String> {
+    let client = Client::new();
+    let url = "http://127.0.0.1:4875/message/connecting-people";
+    let response = client.get(url).send().await.map_err(|e| e.to_string())?;
+
+    if response.status().is_success() {
+        let people: Vec<Person> = response.json().await.map_err(|e| e.to_string())?;
+        Ok(people)
+    } else {
+        Err(format!(
+            "Failed to fetch contacts from 'other-client': {}",
+            response.status()
+        ))
+    }
+}
+
 #[tokio::main]
 async fn main() {
     tauri::Builder::default()
@@ -189,7 +262,10 @@ async fn main() {
             send_message_my_client,
             send_message_other_client,
             get_messages_my_client,
-            get_messages_other_client
+            get_messages_other_client,
+            fetch_form_pages,
+            get_contacts_my_client,
+            get_contacts_other_client,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
