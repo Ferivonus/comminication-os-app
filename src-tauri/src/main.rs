@@ -113,11 +113,9 @@ async fn fetch_wailing_example_data() -> Result<String, String> {
 // Command to send a message to 'my-client'
 #[tauri::command]
 async fn send_message_my_client(new_message: NewMessage) -> Result<(), String> {
-    validate_message(&new_message)?;
-
     let client = Client::new();
     let response = client
-        .post("http://127.0.0.1:4875/message/send-message-my-client")
+        .post("http://127.0.0.1:4875/message/my/send/")
         .json(&new_message)
         .send()
         .await
@@ -132,16 +130,15 @@ async fn send_message_my_client(new_message: NewMessage) -> Result<(), String> {
 // Command to send a message to 'other-client'
 #[tauri::command]
 async fn send_message_other_client(new_message: NewMessage) -> Result<(), String> {
-    validate_message(&new_message)?;
-
     let client = Client::new();
     let response = client
-        .post("http://127.0.0.1:4875/message/send-message-other-client")
+        .post("http://127.0.0.1:4875/message/other/send/")
         .json(&new_message)
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
+    // Pass the entire response to handle_response
     handle_response(response)
         .await
         .map(|_| ())
@@ -154,10 +151,7 @@ async fn get_messages_my_client(connected_person: String) -> Result<String, Stri
     validate_connected_person(&connected_person)?;
 
     let client = Client::new();
-    let url = format!(
-        "http://127.0.0.1:4875/message/get-messages-my-client/{}",
-        connected_person
-    );
+    let url = format!("http://127.0.0.1:4875/message/my/get/{}", connected_person);
     let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
 
     handle_response(response).await.map_err(|e| e.to_string())
@@ -170,21 +164,12 @@ async fn get_messages_other_client(connected_person: String) -> Result<String, S
 
     let client = Client::new();
     let url = format!(
-        "http://127.0.0.1:4875/message/get-messages-other-client/{}",
+        "http://127.0.0.1:4875/message/other/get/{}",
         connected_person
     );
     let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
 
     handle_response(response).await.map_err(|e| e.to_string())
-}
-
-// Helper function to validate NewMessage
-fn validate_message(message: &NewMessage) -> Result<(), String> {
-    if message.sender.is_empty() || message.receiver.is_empty() || message.content.is_empty() {
-        Err("Sender, receiver, and content cannot be empty".into())
-    } else {
-        Ok(())
-    }
 }
 
 // Helper function to validate connected_person
@@ -209,7 +194,7 @@ struct Person {
 #[tauri::command]
 async fn get_contacts_my_client() -> Result<Vec<Person>, String> {
     let client = Client::new();
-    let url = "http://127.0.0.1:4875/message/connected-people";
+    let url = "http://127.0.0.1:4875/message/my/people";
     let response = client.get(url).send().await.map_err(|e| e.to_string())?;
 
     if response.status().is_success() {
@@ -226,7 +211,7 @@ async fn get_contacts_my_client() -> Result<Vec<Person>, String> {
 #[tauri::command]
 async fn get_contacts_other_client() -> Result<Vec<Person>, String> {
     let client = Client::new();
-    let url = "http://127.0.0.1:4875/message/connecting-people";
+    let url = "http://127.0.0.1:4875/message/other/people";
     let response = client.get(url).send().await.map_err(|e| e.to_string())?;
 
     if response.status().is_success() {
@@ -237,6 +222,66 @@ async fn get_contacts_other_client() -> Result<Vec<Person>, String> {
             "Failed to fetch contacts from 'other-client': {}",
             response.status()
         ))
+    }
+}
+
+#[tauri::command]
+async fn add_contact_my_client(
+    id: String,
+    nick: String,
+    age: Option<i32>,
+    location: Option<String>,
+    occupation: Option<String>,
+    extra_info: Option<String>,
+) -> Result<(), String> {
+    let response: reqwest::Response = reqwest::Client::new()
+        .post("http://127.0.0.1:4875/message/my/people/") // Adjust the URL if necessary
+        .json(&serde_json::json!({
+            "id": id,
+            "nick": nick,
+            "age": age,
+            "location": location,
+            "occupation": occupation,
+            "extra_info": extra_info
+        }))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if response.status().is_success() {
+        Ok(())
+    } else {
+        Err(format!("Failed to add contact: {}", response.status()))
+    }
+}
+
+#[tauri::command]
+async fn add_contact_other_client(
+    id: String,
+    nick: String,
+    age: Option<i32>,
+    location: Option<String>,
+    occupation: Option<String>,
+    extra_info: Option<String>,
+) -> Result<(), String> {
+    let response: reqwest::Response = reqwest::Client::new()
+        .post("http://127.0.0.1:4875/message/other/people/") // Adjust the URL if necessary
+        .json(&serde_json::json!({
+            "id": id,
+            "nick": nick,
+            "age": age,
+            "location": location,
+            "occupation": occupation,
+            "extra_info": extra_info
+        }))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if response.status().is_success() {
+        Ok(())
+    } else {
+        Err(format!("Failed to add contact: {}", response.status()))
     }
 }
 
@@ -266,6 +311,8 @@ async fn main() {
             fetch_form_pages,
             get_contacts_my_client,
             get_contacts_other_client,
+            add_contact_my_client,
+            add_contact_other_client,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,6 +1,11 @@
 <script>
+  import AddContactMyClient from "../../components/message_components/AddContactMyClient.svelte";
+  import AddContactOtherClient from "../../components/message_components/AddContactOtherClient.svelte";
   import MyServerMessages from "../../components/MyServerMessages.svelte";
   import ConnectedMessageServers from "../../components/ConnectedMessageServers.svelte";
+
+  /** @type {string} */
+  let selectedContact = "";
 
   /** @type {string | null} */
   let selectedView = null;
@@ -11,6 +16,22 @@
 
   function showConnectedMessageServers() {
     selectedView = "connectedMessageServers";
+  }
+
+  function showAddContactMyClient() {
+    selectedView = "addContactMyClient";
+  }
+
+  function showAddContactOtherClient() {
+    selectedView = "addContactOtherClient";
+  }
+
+  // Handle contact selection from ConnectedMessageServers
+  /**
+   * @param {CustomEvent} event
+   */
+  function handleContactSelection(event) {
+    selectedContact = event.detail.contact;
   }
 </script>
 
@@ -30,18 +51,35 @@
       <button on:click={showConnectedMessageServers}
         >Connected Message Servers</button
       >
+      <button on:click={showAddContactMyClient}>Add Contact My Client</button>
+      <button on:click={showAddContactOtherClient}
+        >Add Contact Other Client</button
+      >
     </div>
 
     {#if selectedView === "myServerMessages"}
-      <MyServerMessages />
+      <MyServerMessages
+        {selectedContact}
+        on:contactSelected={handleContactSelection}
+      />
     {:else if selectedView === "connectedMessageServers"}
-      <ConnectedMessageServers />
+      <ConnectedMessageServers
+        {selectedContact}
+        on:contactSelected={handleContactSelection}
+      />
+    {:else if selectedView === "addContactMyClient"}
+      <AddContactMyClient />
+    {:else if selectedView === "addContactOtherClient"}
+      <AddContactOtherClient />
+    {/if}
+
+    {#if selectedContact}
+      <ConnectedMessageServers
+        {selectedContact}
+        on:contactSelected={handleContactSelection}
+      />
     {/if}
   </div>
-
-  <footer class="footer">
-    <p>Embrace the Chaos to Be Done and Gone | Created by Ferivonus</p>
-  </footer>
 </div>
 
 <style>
