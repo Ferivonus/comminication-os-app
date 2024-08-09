@@ -72,13 +72,6 @@
     {:else if selectedView === "addContactOtherClient"}
       <AddContactOtherClient />
     {/if}
-
-    {#if selectedContact}
-      <ConnectedMessageServers
-        {selectedContact}
-        on:contactSelected={handleContactSelection}
-      />
-    {/if}
   </div>
 </div>
 

@@ -112,11 +112,11 @@ async fn fetch_wailing_example_data() -> Result<String, String> {
 
 // Command to send a message to 'my-client'
 #[tauri::command]
-async fn send_message_my_client(new_message: NewMessage) -> Result<(), String> {
+async fn send_message_my_client(message: NewMessage) -> Result<(), String> {
     let client = Client::new();
     let response = client
         .post("http://127.0.0.1:4875/message/my/send/")
-        .json(&new_message)
+        .json(&message)
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -129,11 +129,11 @@ async fn send_message_my_client(new_message: NewMessage) -> Result<(), String> {
 
 // Command to send a message to 'other-client'
 #[tauri::command]
-async fn send_message_other_client(new_message: NewMessage) -> Result<(), String> {
+async fn send_message_other_client(message: NewMessage) -> Result<(), String> {
     let client = Client::new();
     let response = client
         .post("http://127.0.0.1:4875/message/other/send/")
-        .json(&new_message)
+        .json(&message)
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -145,36 +145,33 @@ async fn send_message_other_client(new_message: NewMessage) -> Result<(), String
         .map_err(|e| e.to_string())
 }
 
-// Command to get messages from 'my-client' by connected_person
+// Command to get messages from 'my-client' by connectedPerson
 #[tauri::command]
-async fn get_messages_my_client(connected_person: String) -> Result<String, String> {
-    validate_connected_person(&connected_person)?;
+async fn get_messages_my_client(connected: String) -> Result<String, String> {
+    validate_connected_person(&connected)?;
 
     let client = Client::new();
-    let url = format!("http://127.0.0.1:4875/message/my/get/{}", connected_person);
+    let url = format!("http://127.0.0.1:4875/message/my/get/{}", connected);
     let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
 
     handle_response(response).await.map_err(|e| e.to_string())
 }
 
-// Command to get messages from 'other-client' by connected_person
+// Command to get messages from 'other-client' by connectedPerson
 #[tauri::command]
-async fn get_messages_other_client(connected_person: String) -> Result<String, String> {
-    validate_connected_person(&connected_person)?;
+async fn get_messages_other_client(connected: String) -> Result<String, String> {
+    validate_connected_person(&connected)?;
 
     let client = Client::new();
-    let url = format!(
-        "http://127.0.0.1:4875/message/other/get/{}",
-        connected_person
-    );
+    let url = format!("http://127.0.0.1:4875/message/other/get/{}", connected);
     let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
 
     handle_response(response).await.map_err(|e| e.to_string())
 }
 
 // Helper function to validate connected_person
-fn validate_connected_person(connected_person: &str) -> Result<(), String> {
-    if connected_person.is_empty() {
+fn validate_connected_person(connected: &str) -> Result<(), String> {
+    if connected.is_empty() {
         Err("Connected person cannot be empty".into())
     } else {
         Ok(())

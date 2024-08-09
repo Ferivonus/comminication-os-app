@@ -8,22 +8,24 @@
   /** @typedef {Object} Contact
    * @property {string} id
    * @property {string} nick
-   */
-
-  /** @typedef {Object} Message
-   * @property {string} content
-   */
-
-  /** @typedef {Object} newMessage
-   * @property {string} sender
-   * @property {string | null} receiver
-   * @property {string} content
-   * @property {string | null} close_one_point
-   * @property {string | null} connected_person
+   * @property {number} age
+   * @property {string} location
+   * @property {string} occupation
+   * @property {string} extra_info
    */
 
   /** @type {Contact[]} */
   let contacts = [];
+
+  /** @typedef {Object} Message
+   * @property {number} id
+   * @property {string} sender
+   * @property {string} receiver
+   * @property {string} content
+   * @property {string} timestamp
+   * @property {string | null} close_one_point
+   * @property {string} connected
+   */
 
   /** @type {Message[]} */
   let messages = [];
@@ -37,42 +39,67 @@
   /** @type {string} */
   let closeOnePoint = "";
 
-  /** @type {newMessage} */
+  /** @typedef {Object} NewMessage
+   * @property {string} sender
+   * @property {string | null} receiver
+   * @property {string} content
+   * @property {string | null} close_one_point
+   * @property {string | null} connected
+   */
+
+  /** @type {NewMessage} */
   let newMessage = {
     sender: "",
-    receiver: "",
+    receiver: null,
     content: "",
-    close_one_point: "",
-    connected_person: "",
+    close_one_point: null,
+    connected: null,
   };
 
-  const dispatch = createEventDispatcher();
-
-  /**
-   * Fetch contacts from Tauri command.
-   */
   async function fetchContacts() {
     try {
       const contactsResponse = await invoke("get_contacts_other_client");
-      contacts = contactsResponse;
+      if (Array.isArray(contactsResponse)) {
+        contacts = contactsResponse;
+      } else {
+        console.error("Unexpected response format for contacts");
+      }
     } catch (error) {
-      console.error("Error fetching contacts:", error);
+      console.error("Error fetching Contacts: ", error);
     }
   }
 
-  /**
-   * Fetch messages for the selected contact.
-   */
-  async function fetchMessages() {
+  async function fetchMessageBySelectedContact() {
     if (!selectedContact) return;
-    console.log(selectedContact);
+    console.log("My selected contact is: ", selectedContact);
+    const connected_person_temp = selectedContact;
 
     try {
-      let messagesResponse = await invoke("get_messages_other_client", {
-        connected_person: selectedContact,
+      const getmessageResponse = await invoke("get_messages_other_client", {
+        connected: connected_person_temp,
       });
 
-      messages = messagesResponse;
+      console.log("API Response:", getmessageResponse); // Debug output
+
+      // Check the response structure
+      if (Array.isArray(getmessageResponse)) {
+        // Log the response to verify structure
+        console.log("Messages response array:", getmessageResponse);
+
+        // Assign messages array if structure is correct
+        messages = getmessageResponse;
+      } else if (getmessageResponse && typeof getmessageResponse === "object") {
+        // Handle single object response
+        console.log("Single message response:", getmessageResponse);
+
+        const singleMessage = getmessageResponse;
+        messages = [singleMessage]; // Wrap single message in an array
+      } else {
+        console.error(
+          "Unexpected response format for messages",
+          getmessageResponse
+        );
+      }
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
@@ -95,36 +122,39 @@
       receiver: selectedContact,
       content: newMessageContent,
       close_one_point: closeOnePoint || null,
-      connected_person: selectedContact || null,
+      connected: selectedContact,
     };
 
-    try {
-      console.log("Sending message:", newMessage);
+    console.log("Sending message:", newMessage);
 
-      await invoke("send_message_other_client", { new_message: newMessage });
+    try {
+      await invoke("send_message_my_client", { message: newMessage });
 
       newMessageContent = "";
       sender = "";
       closeOnePoint = "";
-      selectedContact = "";
 
-      await fetchMessages();
+      await fetchMessageBySelectedContact();
+
+      console.log("Messages updated successfully.");
     } catch (error) {
       console.error("Error sending message:", error);
       alert("Failed to send message. Please check the console for details.");
     }
   }
+
+  const dispatch = createEventDispatcher();
+
   /**
    * Select a contact to view messages.
    * @param {string} contact
    */
   function selectContact(contact) {
     selectedContact = contact;
-    fetchMessages(); // Fetch messages for the selected contact
+    fetchMessageBySelectedContact();
     dispatch("contactSelected", { contact });
   }
 
-  // Fetch contacts on component mount
   fetchContacts();
 </script>
 
@@ -153,27 +183,39 @@
       <h2>Messages with {selectedContact}</h2>
       <div class="messages">
         {#each messages as message}
-          <p>{message.content}</p>
+          <div class="message">
+            <p><strong>Sender:</strong> {message.sender}</p>
+            <p><strong>Content:</strong> {message.content}</p>
+            <p><strong>Timestamp:</strong> {message.timestamp}</p>
+          </div>
         {/each}
       </div>
       <form on:submit={sendMessage}>
         <textarea
+          id="messageContent"
+          name="messageContent"
           bind:value={newMessageContent}
           placeholder="Enter your message"
           required
         ></textarea>
         <input
+          id="senderId"
+          name="senderId"
           type="text"
           bind:value={sender}
           placeholder="Sender ID"
           required
         />
         <input
+          id="closeOnePoint"
+          name="closeOnePoint"
           type="text"
           bind:value={closeOnePoint}
           placeholder="Close One Point"
         />
         <input
+          id="connectedPersonId"
+          name="connectedPersonId"
           type="text"
           bind:value={selectedContact}
           placeholder="Connected Person ID"
