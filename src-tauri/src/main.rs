@@ -18,7 +18,7 @@ struct NewMessage {
     receiver: String,
     content: String,
     close_one_point: Option<String>,
-    connected_person: Option<String>,
+    connected: String,
 }
 
 // Define error types for more specific error handling

@@ -2,7 +2,7 @@
   import AddContactMyClient from "../../components/message_components/AddContactMyClient.svelte";
   import AddContactOtherClient from "../../components/message_components/AddContactOtherClient.svelte";
   import MyServerMessages from "../../components/MyServerMessages.svelte";
-  import ConnectedMessageServers from "../../components/ConnectedMessageServers.svelte";
+  import OtherServerMessageServers from "../../components/OtherServerMessageServers.svelte";
 
   /** @type {string} */
   let selectedContact = "";
@@ -14,8 +14,8 @@
     selectedView = "myServerMessages";
   }
 
-  function showConnectedMessageServers() {
-    selectedView = "connectedMessageServers";
+  function showOtherServerMessageServers() {
+    selectedView = "OtherServerMessageServers";
   }
 
   function showAddContactMyClient() {
@@ -26,7 +26,7 @@
     selectedView = "addContactOtherClient";
   }
 
-  // Handle contact selection from ConnectedMessageServers
+  // Handle contact selection from OtherServerMessageServers
   /**
    * @param {CustomEvent} event
    */
@@ -48,8 +48,8 @@
     <h2>Welcome to the Communication OS</h2>
     <div class="button-container">
       <button on:click={showMyServerMessages}>My Server Messages</button>
-      <button on:click={showConnectedMessageServers}
-        >Connected Message Servers</button
+      <button on:click={showOtherServerMessageServers}
+        >Other Server Messages</button
       >
       <button on:click={showAddContactMyClient}>Add Contact My Client</button>
       <button on:click={showAddContactOtherClient}
@@ -62,8 +62,8 @@
         {selectedContact}
         on:contactSelected={handleContactSelection}
       />
-    {:else if selectedView === "connectedMessageServers"}
-      <ConnectedMessageServers
+    {:else if selectedView === "OtherServerMessageServers"}
+      <OtherServerMessageServers
         {selectedContact}
         on:contactSelected={handleContactSelection}
       />

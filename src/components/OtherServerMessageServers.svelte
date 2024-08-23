@@ -41,19 +41,19 @@
 
   /** @typedef {Object} NewMessage
    * @property {string} sender
-   * @property {string | null} receiver
+   * @property {string} receiver
    * @property {string} content
    * @property {string | null} close_one_point
-   * @property {string | null} connected
+   * @property {string} connected
    */
 
   /** @type {NewMessage} */
   let newMessage = {
     sender: "",
-    receiver: null,
+    receiver: "",
     content: "",
     close_one_point: null,
-    connected: null,
+    connected: "",
   };
 
   async function fetchContacts() {
@@ -128,7 +128,7 @@
     console.log("Sending message:", newMessage);
 
     try {
-      await invoke("send_message_my_client", { message: newMessage });
+      await invoke("send_message_other_client", { message: newMessage });
 
       newMessageContent = "";
       sender = "";
@@ -191,19 +191,12 @@
         {/each}
       </div>
       <form on:submit={sendMessage}>
-        <textarea
-          id="messageContent"
-          name="messageContent"
-          bind:value={newMessageContent}
-          placeholder="Enter your message"
-          required
-        ></textarea>
         <input
           id="senderId"
           name="senderId"
           type="text"
           bind:value={sender}
-          placeholder="Sender ID"
+          placeholder="Sender Name"
           required
         />
         <input
@@ -213,14 +206,13 @@
           bind:value={closeOnePoint}
           placeholder="Close One Point"
         />
-        <input
-          id="connectedPersonId"
-          name="connectedPersonId"
-          type="text"
-          bind:value={selectedContact}
-          placeholder="Connected Person ID"
+        <textarea
+          id="messageContent"
+          name="messageContent"
+          bind:value={newMessageContent}
+          placeholder="Enter your message"
           required
-        />
+        ></textarea>
         <button type="submit">Send Message</button>
       </form>
     {:else}

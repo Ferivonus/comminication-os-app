@@ -18,7 +18,13 @@
   let contacts = [];
 
   /** @typedef {Object} Message
+   * @property {number} id
+   * @property {string} sender
+   * @property {string} receiver
    * @property {string} content
+   * @property {string} timestamp
+   * @property {string | null} close_one_point
+   * @property {string} connected
    */
 
   /** @type {Message[]} */
@@ -33,59 +39,77 @@
   /** @type {string} */
   let closeOnePoint = "";
 
-  /** @typedef {Object} newMessage
+  /** @typedef {Object} NewMessage
    * @property {string} sender
-   * @property {string | null} receiver
+   * @property {string} receiver
    * @property {string} content
    * @property {string | null} close_one_point
-   * @property {string | null} connected_person
+   * @property {string} connected
    */
 
-  /** @type {newMessage} */
+  /** @type {NewMessage} */
   let newMessage = {
     sender: "",
-    receiver: null,
+    receiver: "",
     content: "",
     close_one_point: null,
-    connected_person: null,
+    connected: "",
   };
 
-  const dispatch = createEventDispatcher();
-
-  function fetchContacts() {
-    invoke("get_contacts_my_client")
-      .then((contactsResponse) => {
-        if (Array.isArray(contactsResponse)) {
-          contacts = contactsResponse;
-        } else {
-          console.error("Unexpected response format for contacts");
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching Contacts: ", error);
-      });
+  async function fetchContacts() {
+    try {
+      const contactsResponse = await invoke("get_contacts_my_client");
+      if (Array.isArray(contactsResponse)) {
+        contacts = contactsResponse;
+      } else {
+        console.error("Unexpected response format for contacts");
+      }
+    } catch (error) {
+      console.error("Error fetching Contacts: ", error);
+    }
   }
 
-  function fetchMessageBySelectedContact() {
+  async function fetchMessageBySelectedContact() {
     if (!selectedContact) return;
+    console.log("My selected contact is: ", selectedContact);
+    const connected_person_temp = selectedContact;
 
-    invoke("get_messages_my_client", { connected: selectedContact })
-      .then((getmessageResponse) => {
-        if (Array.isArray(getmessageResponse)) {
-          messages = getmessageResponse;
-        } else {
-          console.error("Unexpected response format for messages");
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching messages: ", error);
+    try {
+      const getmessageResponse = await invoke("get_messages_my_client", {
+        connected: connected_person_temp,
       });
+
+      console.log("API Response:", getmessageResponse); // Debug output
+
+      // Check the response structure
+      if (Array.isArray(getmessageResponse)) {
+        // Log the response to verify structure
+        console.log("Messages response array:", getmessageResponse);
+
+        // Assign messages array if structure is correct
+        messages = getmessageResponse;
+      } else if (getmessageResponse && typeof getmessageResponse === "object") {
+        // Handle single object response
+        console.log("Single message response:", getmessageResponse);
+
+        const singleMessage = getmessageResponse;
+        messages = [singleMessage]; // Wrap single message in an array
+      } else {
+        console.error(
+          "Unexpected response format for messages",
+          getmessageResponse
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
   }
+
   /**
    * Send a new message to the selected contact.
    * @param {Event} event
    */
-  function sendMessage(event) {
+  async function sendMessage(event) {
     event.preventDefault();
 
     if (!newMessageContent || !sender || !selectedContact) {
@@ -94,43 +118,43 @@
     }
 
     newMessage = {
-      sender,
+      sender: sender,
       receiver: selectedContact,
       content: newMessageContent,
       close_one_point: closeOnePoint || null,
-      connected_person: selectedContact || null,
+      connected: selectedContact,
     };
 
     console.log("Sending message:", newMessage);
-    invoke("send_message_my_client", { message: newMessage })
-      .then(() => {
-        newMessageContent = "";
-        sender = "";
-        closeOnePoint = "";
-        selectedContact = "";
 
-        return fetchMessageBySelectedContact();
-      })
-      .then(() => {
-        console.log("Messages updated successfully.");
-      })
-      .catch((error) => {
-        console.error("Error sending message:", error);
-        alert("Failed to send message. Please check the console for details.");
-      });
+    try {
+      await invoke("send_message_my_client", { message: newMessage });
+
+      newMessageContent = "";
+      sender = "";
+      closeOnePoint = "";
+
+      await fetchMessageBySelectedContact();
+
+      console.log("Messages updated successfully.");
+    } catch (error) {
+      console.error("Error sending message:", error);
+      alert("Failed to send message. Please check the console for details.");
+    }
   }
 
+  const dispatch = createEventDispatcher();
+
   /**
-   * Send a new message to the selected contact.
+   * Select a contact to view messages.
    * @param {string} contact
    */
   function selectContact(contact) {
     selectedContact = contact;
-    fetchMessageBySelectedContact(); // Fetch messages for the selected contact
+    fetchMessageBySelectedContact();
     dispatch("contactSelected", { contact });
   }
 
-  // Fetch contacts on component mount
   fetchContacts();
 </script>
 
@@ -159,23 +183,20 @@
       <h2>Messages with {selectedContact}</h2>
       <div class="messages">
         {#each messages as message}
-          <p>{message.content}</p>
+          <div class="message">
+            <p><strong>Sender:</strong> {message.sender}</p>
+            <p><strong>Content:</strong> {message.content}</p>
+            <p><strong>Timestamp:</strong> {message.timestamp}</p>
+          </div>
         {/each}
       </div>
       <form on:submit={sendMessage}>
-        <textarea
-          id="messageContent"
-          name="messageContent"
-          bind:value={newMessageContent}
-          placeholder="Enter your message"
-          required
-        ></textarea>
         <input
           id="senderId"
           name="senderId"
           type="text"
           bind:value={sender}
-          placeholder="Sender ID"
+          placeholder="Sender Name"
           required
         />
         <input
@@ -185,14 +206,13 @@
           bind:value={closeOnePoint}
           placeholder="Close One Point"
         />
-        <input
-          id="connectedPersonId"
-          name="connectedPersonId"
-          type="text"
-          bind:value={selectedContact}
-          placeholder="Connected Person ID"
+        <textarea
+          id="messageContent"
+          name="messageContent"
+          bind:value={newMessageContent}
+          placeholder="Enter your message"
           required
-        />
+        ></textarea>
         <button type="submit">Send Message</button>
       </form>
     {:else}

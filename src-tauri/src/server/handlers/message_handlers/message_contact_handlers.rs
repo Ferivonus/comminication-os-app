@@ -21,7 +21,7 @@ async fn add_contact_my_client(
     use sqlx::query;
 
     let query_str = "
-        INSERT INTO connecting_people (id, nick, age, location, occupation, extra_info)
+        INSERT INTO other_server_people (id, nick, age, location, occupation, extra_info)
         VALUES (?, ?, ?, ?, ?, ?)
     ";
 
@@ -52,7 +52,7 @@ async fn add_contact_other_client(
     use sqlx::query;
 
     let query_str = "
-        INSERT INTO connected_people (id, nick, age, location, occupation, extra_info)
+        INSERT INTO my_server_people (id, nick, age, location, occupation, extra_info)
         VALUES (?, ?, ?, ?, ?, ?)
     ";
 
@@ -87,8 +87,8 @@ struct ProcessedPerson {
 
 // Handler function to get connected people
 #[get("/my/people")]
-pub async fn get_connected_people_handler(pool: web::Data<AppState>) -> impl Responder {
-    let query_str = "SELECT * FROM connected_people";
+pub async fn get_my_server_people_handler(pool: web::Data<AppState>) -> impl Responder {
+    let query_str = "SELECT * FROM my_server_people";
     match query_as::<_, ProcessedPerson>(query_str)
         .fetch_all(&pool.db_pool)
         .await
@@ -103,8 +103,8 @@ pub async fn get_connected_people_handler(pool: web::Data<AppState>) -> impl Res
 
 // Handler function to get connecting people
 #[get("/other/people")]
-pub async fn get_connecting_people_handler(pool: web::Data<AppState>) -> impl Responder {
-    let query_str = "SELECT * FROM connecting_people";
+pub async fn get_other_server_people_handler(pool: web::Data<AppState>) -> impl Responder {
+    let query_str = "SELECT * FROM other_server_people";
     match query_as::<_, ProcessedPerson>(query_str)
         .fetch_all(&pool.db_pool)
         .await

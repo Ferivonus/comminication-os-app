@@ -102,7 +102,7 @@ struct NewMessage {
     receiver: String,
     content: String,
     close_one_point: Option<String>, // Optional field
-    connected: Option<String>,       // Optional field to track conversation partner
+    connected: String,               // Optional field to track conversation partner
 }
 
 // Handler function to send a message to 'my-client'
@@ -111,8 +111,6 @@ pub async fn send_message_my_client(
     pool: web::Data<AppState>,
     new_message: web::Json<NewMessage>,
 ) -> impl Responder {
-    use sqlx::query;
-
     let query_str = "
         INSERT INTO messages_send_to_my_client (sender, receiver, content, close_one_point, connected)
         VALUES (?, ?, ?, ?, ?)
@@ -159,7 +157,7 @@ pub async fn send_message_other_client(
     match result {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(e) => {
-            eprintln!("Error inserting message into 'my-client' table: {}", e);
+            eprintln!("Error inserting message into 'other-client' table: {}", e);
             HttpResponse::InternalServerError().finish()
         }
     }

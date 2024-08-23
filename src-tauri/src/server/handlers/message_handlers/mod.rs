@@ -4,8 +4,8 @@ mod message_handler_package;
 
 use message_contact_handlers::add_contact_my_client;
 use message_contact_handlers::add_contact_other_client;
-use message_contact_handlers::get_connected_people_handler;
-use message_contact_handlers::get_connecting_people_handler;
+use message_contact_handlers::get_my_server_people_handler;
+use message_contact_handlers::get_other_server_people_handler;
 use message_get_set_handlers::get_messages_my_client;
 use message_get_set_handlers::get_messages_other_client;
 use message_get_set_handlers::send_message_my_client;
@@ -25,9 +25,9 @@ pub fn message_handler_config(conf: &mut actix_web::web::ServiceConfig) {
         .service(get_messages_other_client)
         .service(reset_connecting_people_table_handler)
         .service(reset_connected_people_table_handler)
-        .service(get_connected_people_handler)
+        .service(get_my_server_people_handler)
         .service(add_contact_my_client)
         .service(add_contact_other_client)
-        .service(get_connecting_people_handler);
+        .service(get_other_server_people_handler);
     conf.service(scope);
 }

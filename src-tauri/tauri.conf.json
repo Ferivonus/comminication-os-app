@@ -20,7 +20,7 @@
     "windows": [
       {
         "fullscreen": false,
-        "resizable": false,
+        "resizable": true,
         "title": "Connector application",
         "label": "main",
         "width": 800,
